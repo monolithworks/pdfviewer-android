@@ -5,10 +5,11 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
-import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.support.v4.app.Fragment
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,7 +17,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ImageView
-import kotlinx.android.synthetic.main.fragment_viewer.*
+import com.bumptech.glide.Glide
+import kotlinx.android.synthetic.main.fragment_viewer_using_recycler.*
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FilenameFilter
@@ -84,11 +88,15 @@ class ViewerFragment : Fragment() {
         }
 
         try {
-            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)?.let {
-                Log.d("test", "1")
-                PdfRenderer(it).let { renderer ->
-                    Log.d("test", "2")
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)?.let { descriptor ->
+                PdfRenderer(descriptor).let { renderer ->
                     mPageCount = renderer.pageCount
+
+                    launch(UI) {
+                        recycler.adapter = PageAdapter(listOf())
+                        recycler.setItemViewCacheSize(3)
+                        recycler.layoutManager = LinearLayoutManager(this@ViewerFragment.context, LinearLayoutManager.VERTICAL, false)
+                    }
                     pages = MutableList(mPageCount, { it })
 
                     while ( pages.count() > 0) {
@@ -104,48 +112,58 @@ class ViewerFragment : Fragment() {
                                     return false
                                 }
                             }).let { files ->
-                                renderer.openPage(index)?.let { page ->
-                                    Log.d("test index", "" + index)
-
-                                    var multiplier = 1.0F
-                                    if (page.width > page.height) {
-                                        multiplier = 1.5F
-                                    }
-
-                                    val margin = 10.dp
-                                    val ratio = ((getScreenWidthInDPs() * 4).toDouble() / page.width) * multiplier
-                                    val width = Math.round(ratio * page.width).toInt()
-                                    val height = Math.round(ratio * page.height).toInt()
-
-                                    val layoutWidth = (imageView!!.width - margin).toInt()
-                                    val layoutHeight = Math.round((imageView!!.width.toFloat() - margin) * height.toFloat() / width.toFloat())
-                                    val file = File(dir, image.name + "_" + layoutWidth.toString() + "x" + layoutHeight.toString())
-                                    if (index == 0) {
-                                        test = file.absolutePath
-                                    }
-                                    Bitmap.createBitmap(width * 3, height * 3, Bitmap.Config.ARGB_8888)?.let {
-                                        Log.d("test", "8")
-                                        it.eraseColor(Color.WHITE)
-                                        page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-
-                                        FileOutputStream(file).use { out ->
-                                            it.compress(Bitmap.CompressFormat.JPEG, 60, out)
+                                if (files.size > 0) {
+                                    launch(UI) {
+                                        (recycler.adapter as? PageAdapter)?.let {
+                                            it.add(files.first())
                                         }
                                     }
-                                    page.close()
+                                } else {
+                                    renderer.openPage(index)?.let { page ->
+
+                                        var multiplier = 1.0F
+                                        if (page.width > page.height) {
+                                            multiplier = 1.5F
+                                        }
+
+                                        val margin = 10.dp
+                                        val ratio = ((getScreenWidthInDPs() * 4).toDouble() / page.width) * multiplier
+                                        val width = Math.round(ratio * page.width).toInt()
+                                        val height = Math.round(ratio * page.height).toInt()
+
+                                        val layoutWidth = (imageView!!.width - margin).toInt()
+                                        val layoutHeight = Math.round((imageView!!.width.toFloat() - margin) * height.toFloat() / width.toFloat())
+                                        val file = File(dir, image.name + "_" + layoutWidth.toString() + "x" + layoutHeight.toString())
+                                        if (index == 0) {
+                                            test = file.absolutePath
+                                        }
+                                        Bitmap.createBitmap(width * 3, height * 3, Bitmap.Config.ARGB_8888)?.let {
+                                            Log.d("test", "8")
+                                            it.eraseColor(Color.WHITE)
+                                            page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+
+                                            FileOutputStream(file).use { out ->
+                                                it.compress(Bitmap.CompressFormat.JPEG, 60, out)
+                                            }
+                                        }
+                                        page.close()
+                                        launch(UI) {
+                                            (recycler.adapter as? PageAdapter)?.let {
+                                                it.add(file)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                     renderer.close()
                 }
+                descriptor.close()
             }
         } catch (e: Exception) {
             Log.d("exception", e.toString())
         }
-        val image = File(test)
-//        val image = File("")
-        viewer.setImageURI(Uri.fromFile(image))
     }
 
     fun getScreenWidthInDPs(): Int {
@@ -153,5 +171,55 @@ class ViewerFragment : Fragment() {
         val windowManager = context!!.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         windowManager.defaultDisplay.getMetrics(dm)
         return Math.round(dm.widthPixels / dm.density)
+    }
+
+    private inner class PageAdapter(items: List<File>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        private val _list = ArrayList(items)
+
+        fun add(page: File) {
+            _list.add(page)
+
+            notifyItemInserted(_list.size - 1)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): RecyclerView.ViewHolder {
+            val view = LayoutInflater.from(parent!!.context).inflate(R.layout.pdf_item, parent, false)
+
+            return PdfViewHolder(view)
+        }
+
+        override fun getItemCount(): Int {
+            return _list.size
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
+            (holder as? PdfViewHolder)?.let { viewHolder ->
+                val imageFile = _list[position]
+
+                imageFile.name.split("_").let {
+                    it.last().split("x").let {
+                        it.last().toInt().let {
+                            viewHolder.imageView.layoutParams.height = it
+                        }
+                    }
+                }
+
+                context?.let {
+                    Glide.with(it)
+                            .load(imageFile)
+                            .into(viewHolder.imageView)
+                }
+            }
+        }
+
+        override fun onViewRecycled(holder: RecyclerView.ViewHolder?) {
+            (holder as? PdfViewHolder)?.let {holder ->
+                context?.let {
+                    Glide.with(it).clear(holder.imageView)
+                }
+            }
+
+            super.onViewRecycled(holder)
+        }
     }
 }
