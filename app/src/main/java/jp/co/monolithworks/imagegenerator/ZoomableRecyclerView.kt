@@ -181,7 +181,7 @@ class ZoomableRecyclerView : RecyclerView {
     }
 
     override fun dispatchDraw(canvas: Canvas) {
-        canvas.save(Canvas.ALL_SAVE_FLAG)
+        canvas.save()
         if (mScaleFactor == 1.0f) {
             mPosX = 0.0f
             mPosY = 0.0f
