@@ -16,7 +16,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.ImageView
 import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.fragment_viewer_using_recycler.*
 import kotlinx.coroutines.experimental.android.UI
@@ -34,8 +33,6 @@ class ViewerFragment : Fragment() {
     private var pages: MutableList<Int> = mutableListOf()
     val Int.dp: Int
         get() = (this / Resources.getSystem().displayMetrics.density).toInt()
-    var imageView: ImageView? = null
-    var test = ""
 
     companion object {
         private val FILENAME = "ura01a_torisetsu.pdf"
@@ -46,8 +43,7 @@ class ViewerFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val root = inflater.inflate(R.layout.fragment_viewer, container, false)
-        imageView = root.findViewById<ImageView>(R.id.viewer)
+        val root = inflater.inflate(R.layout.fragment_viewer_using_recycler, container, false)
         return root
     }
 
@@ -131,14 +127,10 @@ class ViewerFragment : Fragment() {
                                         val width = Math.round(ratio * page.width).toInt()
                                         val height = Math.round(ratio * page.height).toInt()
 
-                                        val layoutWidth = (imageView!!.width - margin).toInt()
-                                        val layoutHeight = Math.round((imageView!!.width.toFloat() - margin) * height.toFloat() / width.toFloat())
+                                        val layoutWidth = (recycler.width - margin).toInt()
+                                        val layoutHeight = Math.round((recycler.width.toFloat() - margin) * height.toFloat() / width.toFloat())
                                         val file = File(dir, image.name + "_" + layoutWidth.toString() + "x" + layoutHeight.toString())
-                                        if (index == 0) {
-                                            test = file.absolutePath
-                                        }
                                         Bitmap.createBitmap(width * 3, height * 3, Bitmap.Config.ARGB_8888)?.let {
-                                            Log.d("test", "8")
                                             it.eraseColor(Color.WHITE)
                                             page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
@@ -195,14 +187,6 @@ class ViewerFragment : Fragment() {
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
             (holder as? PdfViewHolder)?.let { viewHolder ->
                 val imageFile = _list[position]
-
-                imageFile.name.split("_").let {
-                    it.last().split("x").let {
-                        it.last().toInt().let {
-                            viewHolder.imageView.layoutParams.height = it
-                        }
-                    }
-                }
 
                 context?.let {
                     Glide.with(it)
