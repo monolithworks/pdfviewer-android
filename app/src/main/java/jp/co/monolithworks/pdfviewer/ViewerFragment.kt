@@ -26,12 +26,12 @@ import java.io.FilenameFilter
  */
 class ViewerFragment : Fragment() {
 
+    private var files: ArrayList<File> = arrayListOf()
     private var mPageCount = 0
     private var pages: MutableList<Int> = mutableListOf()
     val Int.dp: Int
         get() = (this / Resources.getSystem().displayMetrics.density).toInt()
     var imageView: ImageView? = null
-    var test = ""
 
     companion object {
         private val FILENAME = "ura01a_torisetsu.pdf"
@@ -76,56 +76,6 @@ class ViewerFragment : Fragment() {
         return file
     }
 
-    /*fun load() {
-        val config = PRDownloaderConfig.newBuilder()
-                .setDatabaseEnabled(true)
-                .setReadTimeout(30000)
-                .setConnectTimeout(30000)
-                .build()
-        PRDownloader.initialize(context, config)
-
-        val dir = File(getCacheDir(context!!), id.toString())
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-        File(dir, mName).let {
-            file = it
-        }
-
-        Log.d("start?","download")
-        PRDownloader.download(mUrl, dir.path, mName)
-                .build()
-                .setOnStartOrResumeListener(object : OnStartOrResumeListener {
-                    override fun onStartOrResume() {
-
-                    }
-                })
-                .setOnPauseListener(object : OnPauseListener {
-                    override fun onPause() {
-
-                    }
-                })
-                .setOnCancelListener(object : OnCancelListener {
-                    override fun onCancel() {
-
-                    }
-                })
-                .setOnProgressListener(object : OnProgressListener {
-                    override fun onProgress(progress: Progress) {
-
-                    }
-                })
-                .start(object : OnDownloadListener {
-                    override fun onDownloadComplete() {
-                        generate()
-                    }
-
-                    override fun onError(error: Error) {
-
-                    }
-                })
-    }*/
-
     fun generate(file: File) {
         val dir = File(file.toString() + "_cache")
         if (!dir.exists()) {
@@ -143,16 +93,7 @@ class ViewerFragment : Fragment() {
                     while ( pages.count() > 0) {
                         pages.removeAt(0).let { index ->
                             val image = File(dir, index.toString())
-                            dir.listFiles(object: FilenameFilter {
-                                override fun accept(p0: File?, p1: String?): Boolean {
-                                    p1?.let {
-                                        if (it.startsWith(index.toString() + "_")) {
-                                            return true
-                                        }
-                                    }
-                                    return false
-                                }
-                            }).let { files ->
+                            if (!image.exists()) {
                                 renderer.openPage(index)?.let { page ->
                                     Log.d("test index", "" + index)
 
@@ -168,10 +109,8 @@ class ViewerFragment : Fragment() {
 
                                     val layoutWidth = (imageView!!.width - margin).toInt()
                                     val layoutHeight = Math.round((imageView!!.width.toFloat() - margin) * height.toFloat() / width.toFloat())
-                                    val file = File(dir, image.name + "_" + layoutWidth.toString() + "x" + layoutHeight.toString())
-                                    if (index == 0) {
-                                        test = file.absolutePath
-                                    }
+                                    val file = File(dir, image.name)
+                                    Log.d("F", file.toString())
                                     Bitmap.createBitmap(width * 2, height * 2, Bitmap.Config.ARGB_8888)?.let {
                                         Log.d("test", "8")
                                         it.eraseColor(Color.WHITE)
@@ -184,6 +123,8 @@ class ViewerFragment : Fragment() {
                                     page.close()
                                 }
                             }
+
+                            files.add(image)
                         }
                     }
                     renderer.close()
@@ -192,9 +133,6 @@ class ViewerFragment : Fragment() {
         } catch (e: Exception) {
             Log.d("exception", e.toString())
         }
-        val image = File(test)
-//        val image = File("")
-        viewer.setImageURI(Uri.fromFile(image))
     }
 
     fun getScreenWidthInDPs(): Int {
