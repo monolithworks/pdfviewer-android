@@ -18,7 +18,6 @@ import android.view.WindowManager
 import android.widget.ImageView
 import kotlinx.android.synthetic.main.fragment_viewer.*
 import java.io.File
-import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.io.FilenameFilter
 
@@ -51,12 +50,15 @@ class ViewerFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        getPDF().let {
-            generate(it)
+        context?.let {
+            getPDF(it).let {
+                generate(it)
+            }
         }
+
     }
 
-    fun getPDF(): File {
+    fun getPDF(context: Context): File {
         val file = File(context.cacheDir, FILENAME)
         if (!file.exists()) {
             val asset = context.assets.open(FILENAME)
@@ -74,56 +76,6 @@ class ViewerFragment : Fragment() {
 
         return file
     }
-
-    /*fun load() {
-        val config = PRDownloaderConfig.newBuilder()
-                .setDatabaseEnabled(true)
-                .setReadTimeout(30000)
-                .setConnectTimeout(30000)
-                .build()
-        PRDownloader.initialize(context, config)
-
-        val dir = File(getCacheDir(context!!), id.toString())
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-        File(dir, mName).let {
-            file = it
-        }
-
-        Log.d("start?","download")
-        PRDownloader.download(mUrl, dir.path, mName)
-                .build()
-                .setOnStartOrResumeListener(object : OnStartOrResumeListener {
-                    override fun onStartOrResume() {
-
-                    }
-                })
-                .setOnPauseListener(object : OnPauseListener {
-                    override fun onPause() {
-
-                    }
-                })
-                .setOnCancelListener(object : OnCancelListener {
-                    override fun onCancel() {
-
-                    }
-                })
-                .setOnProgressListener(object : OnProgressListener {
-                    override fun onProgress(progress: Progress) {
-
-                    }
-                })
-                .start(object : OnDownloadListener {
-                    override fun onDownloadComplete() {
-                        generate()
-                    }
-
-                    override fun onError(error: Error) {
-
-                    }
-                })
-    }*/
 
     fun generate(file: File) {
         val dir = File(file.toString() + "_cache")
