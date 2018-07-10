@@ -3,6 +3,7 @@ package jp.co.monolithworks.imagegenerator
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
@@ -16,16 +17,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.fragment_viewer_using_recycler.*
-import kotlinx.android.synthetic.main.pdf_item.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FilenameFilter
-import android.R.attr.path
-import android.graphics.BitmapFactory
 
 
 
@@ -68,10 +65,10 @@ class ViewerFragment : Fragment() {
         if (!file.exists()) {
             val asset = context.assets.open(FILENAME)
             val output = FileOutputStream(file)
-            val buffer = ByteArray(2048)
+            val buffer = ByteArray(4096)
             var size: Int = -1
 
-            while (asset.read(buffer).let { size = it; it != 1 }) {
+            while (asset.read(buffer).let { size = it; it > 0 }) {
                 output.write(buffer, 0, size)
             }
 
