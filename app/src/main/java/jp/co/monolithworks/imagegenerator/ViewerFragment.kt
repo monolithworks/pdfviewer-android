@@ -38,6 +38,8 @@ class ViewerFragment : Fragment() {
 
     companion object {
         private val FILENAME = "ura01a_torisetsu.pdf"
+        private val FILENAME2 = "853_811064_302_a.pdf"
+        private val FILENAME3 = "TV_sou.pdf"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
