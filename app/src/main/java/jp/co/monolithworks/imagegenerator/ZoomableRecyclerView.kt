@@ -199,7 +199,7 @@ class ZoomableRecyclerView : RecyclerView {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             val prevScaleFactor = mScaleFactor
             mScaleFactor *= detector.scaleFactor
-            mScaleFactor = Math.max(1.0f, Math.min(mScaleFactor, 3.0f))
+            mScaleFactor = Math.max(1.0f, Math.min(mScaleFactor, 5.0f))
             maxWidth = width - width * mScaleFactor
             maxHeight = height - height * mScaleFactor
 

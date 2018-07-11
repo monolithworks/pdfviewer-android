@@ -3,7 +3,6 @@ package jp.co.monolithworks.imagegenerator
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
@@ -37,9 +36,9 @@ class ViewerFragment : Fragment() {
         get() = (this / Resources.getSystem().displayMetrics.density).toInt()
 
     companion object {
-        private val FILENAME = "ura01a_torisetsu.pdf"
-        private val FILENAME2 = "853_811064_302_a.pdf"
-        private val FILENAME3 = "TV_sou.pdf"
+        private val FILENAME2 = "ura01a_torisetsu.pdf"
+        private val FILENAME3 = "853_811064_302_a.pdf"
+        private val FILENAME = "TV_sou.pdf"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -131,7 +130,7 @@ class ViewerFragment : Fragment() {
                                         val width = Math.round(ratio * page.width).toInt()
                                         val height = Math.round(ratio * page.height).toInt()
 
-                                        val layoutWidth = (recycler.width - margin).toInt()
+                                        val layoutWidth = (recycler.width - margin)
                                         val layoutHeight = Math.round((recycler.width.toFloat() - margin) * height.toFloat() / width.toFloat())
                                         val file = File(dir, image.name + "_" + layoutWidth.toString() + "x" + layoutHeight.toString())
                                         Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)?.let {
@@ -192,10 +191,19 @@ class ViewerFragment : Fragment() {
             (holder as? PdfViewHolder)?.let { viewHolder ->
                 val imageFile = _list[position]
 
-                val option = BitmapFactory.Options()
-                val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, option)
-                viewHolder.imageView.setImageBitmap(bitmap)
+                context?.let {
+                    viewHolder.setBitmap(imageFile.absolutePath, it)
+                }
             }
+        }
+
+        override fun onViewRecycled(holder: RecyclerView.ViewHolder?) {
+            (holder as? PdfViewHolder)?.let { viewHolder ->
+                viewHolder.imageView.setImageBitmap(null)
+                viewHolder.bitmap?.recycle()
+                viewHolder.bitmap = null
+            }
+            super.onViewRecycled(holder)
         }
     }
 }
