@@ -18,6 +18,7 @@ class ViewerItemViewHolder(view: View): RecyclerView.ViewHolder(view) {
     private var _shadowedBitmap: Bitmap? = null
     private val imageView = view.findViewById(R.id.imageView) as ImageView
 
+    var isDetail: Boolean = false
     var job: Job? = null
     var bitmap: Bitmap?
     get() = _bitmap

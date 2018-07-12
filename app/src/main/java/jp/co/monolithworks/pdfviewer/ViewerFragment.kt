@@ -181,31 +181,32 @@ class ViewerFragment : Fragment() {
                             _requiredDetailResource = false
 
                             (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
-                                var first = it.findFirstVisibleItemPosition() - 2
+                                var first = it.findFirstVisibleItemPosition() - 1
                                 if (first < 0) {
                                     first = 0
                                 }
-                                var last = it.findLastVisibleItemPosition() + 2
+                                var last = it.findLastVisibleItemPosition() + 1
                                 if (last > _list.size - 1) {
                                     last = _list.size - 1
                                 }
 
                                 for (position in first..last) {
-                                    (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let {
+                                    (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let { viewHolder ->
                                         val imageFile = _list[position]
                                         var bitmap: Bitmap? = null
                                         val option = BitmapFactory.Options()
-                                        it.job?.cancel()
+                                        viewHolder.job?.cancel()
                                         Log.d("PA", "redrawNormalResource: " + position.toString())
 
-                                        it.job = launch {
+                                        viewHolder.job = launch {
                                             async {
+                                                viewHolder.isDetail = false
                                                 bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, option)
                                             }.await()
 
                                             launch(UI) {
                                                 Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
-                                                it.bitmap = bitmap
+                                                viewHolder.bitmap = bitmap
                                             }
                                         }
                                     }
@@ -227,21 +228,57 @@ class ViewerFragment : Fragment() {
                                 }
 
                                 for (position in first..last) {
-                                    (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let {
+                                    (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let { viewHolder ->
                                         val imageFile = _list[position]
                                         var bitmap: Bitmap? = null
                                         val option = BitmapFactory.Options()
-                                        it.job?.cancel()
+                                        viewHolder.job?.cancel()
                                         Log.d("PA", "redrawDetailResource: " + position.toString())
 
-                                        it.job = launch {
+                                        viewHolder.job = launch {
                                             async {
+                                                viewHolder.isDetail = true
                                                 bitmap = BitmapFactory.decodeFile(imageFile.absolutePath + "_l", option)
                                             }.await()
 
                                             launch(UI) {
                                                 Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
-                                                it.bitmap = bitmap
+                                                viewHolder.bitmap = bitmap
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
+                                var first = it.findFirstVisibleItemPosition() - 1
+                                if (first < 0) {
+                                    first = 0
+                                }
+                                var last = it.findLastVisibleItemPosition() + 1
+                                if (last > _list.size - 1) {
+                                    last = _list.size - 1
+                                }
+
+                                for (position in first..last) {
+                                    (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let { viewHolder ->
+                                        if (viewHolder.isDetail == true) {
+                                            val imageFile = _list[position]
+                                            var bitmap: Bitmap? = null
+                                            val option = BitmapFactory.Options()
+                                            viewHolder.job?.cancel()
+                                            Log.d("PA", "redrawNormalResource: " + position.toString())
+
+                                            viewHolder.job = launch {
+                                                async {
+                                                    viewHolder.isDetail = false
+                                                    bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, option)
+                                                }.await()
+
+                                                launch(UI) {
+                                                    Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
+                                                    viewHolder.bitmap = bitmap
+                                                }
                                             }
                                         }
                                     }
@@ -296,10 +333,14 @@ class ViewerFragment : Fragment() {
                 viewHolder.job = launch {
                     async {
                         when (_requiredDetailResource) {
-                            true ->
+                            true -> {
+                                viewHolder.isDetail = true
                                 bitmap = BitmapFactory.decodeFile(imageFile.absolutePath + "_l", option)
-                            else ->
+                            }
+                            else -> {
+                                viewHolder.isDetail = false
                                 bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, option)
+                            }
                         }
                     }.await()
                     Log.d("PA " + position.toString() + "processing", Date().time.toString())
