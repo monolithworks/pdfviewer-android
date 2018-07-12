@@ -17,8 +17,9 @@ import jp.co.monolithworks.pdfviewer.ViewerFragment
  */
 class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0): RecyclerView(context, attrs, defStyleAttr) {
 
+    lateinit var mScaleDetector: ScaleGestureDetector
+
     private var mActivePointerId = INVALID_POINTER_ID
-    private var mScaleDetector: ScaleGestureDetector? = null
     private var mScaleFactor = 1f
     private var maxWidth = 0f
     private var maxHeight = 0f
@@ -66,6 +67,8 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                     if (!canScrollVertically(-1) || !canScrollVertically(1)) {
                         mPosY += dy
+                    } else {
+                        mPosY -= dy
                     }
                     if (mPosX > 0.0f)
                         mPosX = 0.0f
@@ -91,6 +94,8 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                     if (!canScrollVertically(-1) || !canScrollVertically(1)) {
                         mPosY += dy
+                    } else {
+                        mPosY -= dy
                     }
 
                     if (mPosX > 0.0f)
@@ -138,8 +143,9 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         super.onTouchEvent(event)
+
         val action = event.actionMasked
-        mScaleDetector!!.onTouchEvent(event)
+        mScaleDetector.onTouchEvent(event)
 
         when (action) {
             MotionEvent.ACTION_DOWN -> {
@@ -164,6 +170,8 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                     if (!canScrollVertically(-1) || !canScrollVertically(1)) {
                         mPosY += dy
+                    } else {
+                        mPosY -= dy
                     }
 
                     if (mPosX > 0.0f)
@@ -190,6 +198,8 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                     if (!canScrollVertically(-1) || !canScrollVertically(1)) {
                         mPosY += dy
+                    } else {
+                        mPosY -= dy
                     }
 
                     if (mPosX > 0.0f)

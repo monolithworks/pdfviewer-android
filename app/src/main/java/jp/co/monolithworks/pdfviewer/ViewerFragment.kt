@@ -42,8 +42,8 @@ class ViewerFragment : Fragment() {
 
     companion object {
         private val VALUES = listOf<Int>(1024, 1024 * 3)
-        private val FILENAME = "ura01a_torisetsu.pdf"
-        //private val FILENAME = "853_811064_302_a.pdf"
+        //private val FILENAME = "ura01a_torisetsu.pdf"
+        private val FILENAME = "853_811064_302_a.pdf"
         //private val FILENAME = "TV_sou.pdf"
     }
 
@@ -309,7 +309,7 @@ class ViewerFragment : Fragment() {
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
 
             (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
-                if (it.findLastVisibleItemPosition() + 1 < position) {
+                if ((it.findLastVisibleItemPosition() + 1 < position) || (it.findFirstVisibleItemPosition() - 1 > position)) {
                     return
                 }
             }
