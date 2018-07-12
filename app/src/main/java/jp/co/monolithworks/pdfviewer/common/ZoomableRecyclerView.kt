@@ -118,7 +118,7 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                     mPosX += dx
 
-                    if (_scrollOffsetY == 0 || _scrollOffsetY == (computeVerticalScrollRange() - height.toInt())) {
+                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
                         mPosY += dy
                     }
 
