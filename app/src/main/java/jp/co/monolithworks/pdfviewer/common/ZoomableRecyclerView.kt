@@ -29,23 +29,14 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
     private var width = 0f
     private var height = 0f
 
-    private var _scrollOffsetY = 0
-
     init {
         mScaleDetector = ScaleGestureDetector(getContext(), ScaleListener())
-
-        addOnScrollListener(object: RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
-                _scrollOffsetY += dy
-            }
-        })
     }
 
     override fun fling(velocityX: Int, velocityY: Int): Boolean {
-        val velocity = Math.round(velocityY.toDouble() * 0.7).toInt()
-        return super.fling(velocityX, velocity)
+        val reduced = Math.round(velocityY.toDouble() * 0.7).toInt()
+
+        return super.fling(velocityX, reduced)
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
@@ -88,6 +79,7 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         width = View.MeasureSpec.getSize(widthMeasureSpec).toFloat()
         height = View.MeasureSpec.getSize(heightMeasureSpec).toFloat()
+
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
@@ -104,7 +96,6 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                 mLastTouchX = x
                 mLastTouchY = y
-
                 mActivePointerId = event.getPointerId(0)
             }
 
@@ -136,8 +127,6 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                     mLastTouchX = x
                     mLastTouchY = y
-
-
                 } catch (e: Exception) {
 
                 }
@@ -152,6 +141,7 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
                 val pointerId = event.getPointerId(pointerIndex)
                 if (pointerId == mActivePointerId) {
                     val newPointerIndex = if (pointerIndex == 0) 1 else 0
+
                     mLastTouchX = event.getX(newPointerIndex)
                     mLastTouchY = event.getY(newPointerIndex)
                     mActivePointerId = event.getPointerId(newPointerIndex)
