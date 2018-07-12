@@ -29,6 +29,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.FilenameFilter
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * Created by adeliae on 2018/07/11.
@@ -63,7 +64,7 @@ class ViewerFragment : Fragment() {
             recycler.setItemViewCacheSize(3)
             recycler.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
-            async(CommonPool) {
+            async {
                 getPDF(context, FILENAME).let {
                     generate(it)
                 }
@@ -180,10 +181,16 @@ class ViewerFragment : Fragment() {
                             _requiredDetailResource = false
 
                             (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
-                                val firstVisibleItemPosition = it.findFirstVisibleItemPosition()
-                                val lastVisibleItemPosition = it.findLastVisibleItemPosition()
+                                var first = it.findFirstVisibleItemPosition() - 2
+                                if (first < 0) {
+                                    first = 0
+                                }
+                                var last = it.findLastVisibleItemPosition() + 2
+                                if (last > _list.size - 1) {
+                                    last = _list.size - 1
+                                }
 
-                                for (position in firstVisibleItemPosition..lastVisibleItemPosition) {
+                                for (position in first..last) {
                                     (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let {
                                         val imageFile = _list[position]
                                         var bitmap: Bitmap? = null
@@ -210,10 +217,16 @@ class ViewerFragment : Fragment() {
                             _requiredDetailResource = true
 
                             (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
-                                val firstVisibleItemPosition = it.findFirstVisibleItemPosition()
-                                val lastVisibleItemPosition = it.findLastVisibleItemPosition()
+                                var first = it.findFirstVisibleItemPosition() - 1
+                                if (first < 0) {
+                                    first = 0
+                                }
+                                var last = it.findLastVisibleItemPosition() + 1
+                                if (last > _list.size - 1) {
+                                    last = _list.size - 1
+                                }
 
-                                for (position in firstVisibleItemPosition..lastVisibleItemPosition) {
+                                for (position in first..last) {
                                     (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let {
                                         val imageFile = _list[position]
                                         var bitmap: Bitmap? = null
@@ -254,8 +267,11 @@ class ViewerFragment : Fragment() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val view = LayoutInflater.from(parent!!.context).inflate(R.layout.layout_viewer_item, parent, false)
+            val viewHolder = ViewerItemViewHolder(view)
 
-            return ViewerItemViewHolder(view)
+            Log.d("PA", "created")
+
+            return viewHolder
         }
 
         override fun getItemCount(): Int {
@@ -263,6 +279,13 @@ class ViewerFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+
+            (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
+                if (it.findLastVisibleItemPosition() + 1 < position) {
+                    return
+                }
+            }
+
             (holder as? ViewerItemViewHolder)?.let { viewHolder ->
                 val imageFile = _list[position]
                 var bitmap: Bitmap? = null
