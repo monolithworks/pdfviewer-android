@@ -2,18 +2,20 @@ package jp.co.monolithworks.pdfviewer.common
 
 import android.content.Context
 import android.graphics.Canvas
+import android.support.v4.app.Fragment
 import android.support.v4.view.MotionEventCompat
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
-
+import android.util.Log
+import jp.co.monolithworks.pdfviewer.ViewerFragment
 
 /**
  * Created by adeliae on 2018/07/11.
  */
-class ZoomableRecyclerView : RecyclerView {
+class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0): RecyclerView(context, attrs, defStyleAttr) {
 
     private var mActivePointerId = INVALID_POINTER_ID
     private var mScaleDetector: ScaleGestureDetector? = null
@@ -27,15 +29,7 @@ class ZoomableRecyclerView : RecyclerView {
     private var width = 0f
     private var height = 0f
 
-    constructor(context: Context) : super(context) {
-        mScaleDetector = ScaleGestureDetector(getContext(), ScaleListener())
-    }
-
-    constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-        mScaleDetector = ScaleGestureDetector(getContext(), ScaleListener())
-    }
-
-    constructor(context: Context, attrs: AttributeSet, defStyle: Int) : super(context, attrs, defStyle) {
+    init {
         mScaleDetector = ScaleGestureDetector(getContext(), ScaleListener())
     }
 
@@ -207,6 +201,10 @@ class ZoomableRecyclerView : RecyclerView {
             val focusY = detector.focusY
             mPosX += (mPosX - focusX) * (adjustedScaleFactor - 1)
             mPosY += (mPosY - focusY) * (adjustedScaleFactor - 1)
+
+            (adapter as? ViewerFragment.PageAdapter)?.let {
+                it.scaleFactor = mScaleFactor
+            }
 
             invalidate()
             return true

@@ -28,6 +28,7 @@ import kotlinx.coroutines.experimental.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FilenameFilter
+import java.util.*
 
 /**
  * Created by adeliae on 2018/07/11.
@@ -37,11 +38,12 @@ class ViewerFragment : Fragment() {
     private var files: ArrayList<File> = arrayListOf()
     private var mPageCount = 0
     private var pages: MutableList<Int> = mutableListOf()
-    val Int.dp: Int
-        get() = (this / Resources.getSystem().displayMetrics.density).toInt()
 
     companion object {
-        private val FILENAME = "ura01a_torisetsu.pdf"
+        private val VALUES = listOf<Int>(1024, 1024 * 3)
+        //private val FILENAME = "ura01a_torisetsu.pdf"
+        private val FILENAME = "853_811064_302_a.pdf"
+        //private val FILENAME = "TV_sou.pdf"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,22 +58,28 @@ class ViewerFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        context?.let {
-            getPDF(it).let {
-                generate(it)
+        context?.let {context ->
+            recycler.adapter = PageAdapter(listOf())
+            recycler.setItemViewCacheSize(3)
+            recycler.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+
+            async(CommonPool) {
+                getPDF(context, FILENAME).let {
+                    generate(it)
+                }
             }
         }
     }
 
-    fun getPDF(context: Context): File {
-        val file = File(context.cacheDir, FILENAME)
+    fun getPDF(context: Context, fileName: String): File {
+        val file = File(context.cacheDir, fileName)
         if (!file.exists()) {
-            val asset = context.assets.open(FILENAME)
+            val asset = context.assets.open(fileName)
             val output = FileOutputStream(file)
-            val buffer = ByteArray(2048)
+            val buffer = ByteArray(asset.available())
             var size: Int = -1
 
-            while (asset.read(buffer).let { size = it; it != 1 }) {
+            while (asset.read(buffer).let { size = it; it != -1 }) {
                 output.write(buffer, 0, size)
             }
 
@@ -94,12 +102,6 @@ class ViewerFragment : Fragment() {
                     mPageCount = renderer.pageCount
                     pages = MutableList(mPageCount, { it })
 
-                    launch(UI) {
-                        recycler.adapter = PageAdapter(listOf())
-                        recycler.setItemViewCacheSize(3)
-                        recycler.layoutManager = LinearLayoutManager(this@ViewerFragment.context, LinearLayoutManager.VERTICAL, false)
-                    }
-
                     while ( pages.count() > 0) {
                         pages.removeAt(0).let { index ->
                             val image = File(dir, index.toString())
@@ -113,36 +115,44 @@ class ViewerFragment : Fragment() {
                                 }
                                 else -> {
                                     renderer.openPage(index)?.let { page ->
-                                        var multiplier = 1.0F
-                                        if (page.width > page.height) {
-                                            multiplier = 1.5F
-                                        }
+                                        for (value in VALUES) {
+                                            var width = value
+                                            var height = Math.round(value.toDouble() * (page.height.toDouble() / page.width.toDouble())).toInt()
+                                            if (page.width > page.height) {
+                                                height = value
+                                                width = Math.round(value.toDouble() * (page.width.toDouble() / page.height.toDouble())).toInt()
+                                            }
+                                            var file = File(dir, image.name)
+                                            if (file.exists()) {
+                                                file = File(dir, image.name + "_l")
 
-                                        val ratio = ((getScreenWidthInDPs() * 4).toDouble() / page.width) * multiplier
-                                        val width = Math.round(ratio * page.width).toInt()
-                                        val height = Math.round(ratio * page.height).toInt()
-                                        val file = File(dir, image.name)
+                                                width = value
+                                                height = Math.round(value.toDouble() * (page.height.toDouble() / page.width.toDouble())).toInt()
+                                                if (page.width < page.height) {
+                                                    height = value
+                                                    width = Math.round(value.toDouble() * (page.width.toDouble() / page.height.toDouble())).toInt()
+                                                }
+                                            }
 
-                                        Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)?.let {
-                                            it.eraseColor(Color.WHITE)
-                                            page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                                            Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)?.let {
+                                                it.eraseColor(Color.WHITE)
+                                                page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
-                                            FileOutputStream(file).use { out ->
-                                                it.compress(Bitmap.CompressFormat.JPEG, 60, out)
+                                                FileOutputStream(file).use { out ->
+                                                    it.compress(Bitmap.CompressFormat.JPEG, 60, out)
+                                                }
                                             }
                                         }
-                                        page.close()
 
+                                        page.close()
                                         launch(UI) {
                                             (recycler.adapter as? PageAdapter)?.let {
-                                                it.add(file)
+                                                it.add(image)
                                             }
                                         }
                                     }
                                 }
                             }
-
-                            files.add(image)
                         }
                     }
                     renderer.close()
@@ -153,20 +163,93 @@ class ViewerFragment : Fragment() {
         }
     }
 
-    fun getScreenWidthInDPs(): Int {
-        val dm = DisplayMetrics()
-        val windowManager = context!!.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        windowManager.defaultDisplay.getMetrics(dm)
-        return Math.round(dm.widthPixels / dm.density)
-    }
-
-    private inner class PageAdapter(items: List<File>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    inner class PageAdapter(items: List<File>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val _list = ArrayList(items)
+        private var _requiredDetailResource = false
+        private var _currentScaleFactror = 1.0f
+        lateinit var _recyclerView: RecyclerView
+
+        var scaleFactor: Float
+            get() = _currentScaleFactror
+            set(value) {
+                _currentScaleFactror = value
+
+                when (_requiredDetailResource) {
+                    true ->
+                        if (_currentScaleFactror < 2) {
+                            _requiredDetailResource = false
+
+                            (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
+                                val firstVisibleItemPosition = it.findFirstVisibleItemPosition()
+                                val lastVisibleItemPosition = it.findLastVisibleItemPosition()
+
+                                for (position in firstVisibleItemPosition..lastVisibleItemPosition) {
+                                    (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let {
+                                        val imageFile = _list[position]
+                                        var bitmap: Bitmap? = null
+                                        val option = BitmapFactory.Options()
+                                        it.job?.cancel()
+                                        Log.d("PA", "redrawNormalResource: " + position.toString())
+
+                                        it.job = launch {
+                                            async {
+                                                bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, option)
+                                            }.await()
+
+                                            launch(UI) {
+                                                Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
+                                                it.bitmap = bitmap
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    false ->
+                        if (_currentScaleFactror > 2) {
+                            _requiredDetailResource = true
+
+                            (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
+                                val firstVisibleItemPosition = it.findFirstVisibleItemPosition()
+                                val lastVisibleItemPosition = it.findLastVisibleItemPosition()
+
+                                for (position in firstVisibleItemPosition..lastVisibleItemPosition) {
+                                    (_recyclerView.findViewHolderForAdapterPosition(position) as? ViewerItemViewHolder)?.let {
+                                        val imageFile = _list[position]
+                                        var bitmap: Bitmap? = null
+                                        val option = BitmapFactory.Options()
+                                        it.job?.cancel()
+                                        Log.d("PA", "redrawDetailResource: " + position.toString())
+
+                                        it.job = launch {
+                                            async {
+                                                bitmap = BitmapFactory.decodeFile(imageFile.absolutePath + "_l", option)
+                                            }.await()
+
+                                            launch(UI) {
+                                                Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
+                                                it.bitmap = bitmap
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                }
+
+            }
 
         fun add(page: File) {
+            Log.d("PA", "inserted")
             _list.add(page)
 
             notifyItemInserted(_list.size - 1)
+        }
+
+        override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+            super.onAttachedToRecyclerView(recyclerView)
+
+            _recyclerView = recyclerView
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -184,22 +267,27 @@ class ViewerFragment : Fragment() {
                 val imageFile = _list[position]
                 var bitmap: Bitmap? = null
                 val option = BitmapFactory.Options()
+                viewHolder.job?.cancel()
 
-                launch(UI) {
-                    async(CommonPool) {
-                        bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, option)
+                Log.d("PA " + position.toString() + "before", Date().time.toString())
+                viewHolder.job = launch {
+                    async {
+                        when (_requiredDetailResource) {
+                            true ->
+                                bitmap = BitmapFactory.decodeFile(imageFile.absolutePath + "_l", option)
+                            else ->
+                                bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, option)
+                        }
                     }.await()
+                    Log.d("PA " + position.toString() + "processing", Date().time.toString())
+                    launch(UI) {
+                        Log.d("PA", "binded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
+                        holder.bitmap = bitmap
 
-                    holder.imageView.setImageBitmap(bitmap)
+                        Log.d("PA " + position.toString() + "after", Date().time.toString())
+                    }
                 }
             }
-        }
-
-        override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
-            (holder as? ViewerItemViewHolder)?.let { viewHolder ->
-
-            }
-            super.onViewRecycled(holder)
         }
     }
 }
