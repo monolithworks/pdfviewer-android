@@ -42,8 +42,8 @@ class ViewerFragment : Fragment() {
 
     companion object {
         private val VALUES = listOf<Int>(1024, 1024 * 3)
-        //private val FILENAME = "ura01a_torisetsu.pdf"
-        private val FILENAME = "853_811064_302_a.pdf"
+        private val FILENAME = "ura01a_torisetsu.pdf"
+        //private val FILENAME = "853_811064_302_a.pdf"
         //private val FILENAME = "TV_sou.pdf"
     }
 
@@ -168,6 +168,7 @@ class ViewerFragment : Fragment() {
         private val _list = ArrayList(items)
         private var _requiredDetailResource = false
         private var _currentScaleFactror = 1.0f
+
         lateinit var _recyclerView: RecyclerView
 
         var scaleFactor: Float
@@ -177,7 +178,7 @@ class ViewerFragment : Fragment() {
 
                 when (_requiredDetailResource) {
                     true ->
-                        if (_currentScaleFactror < 2) {
+                        if (_currentScaleFactror < 2.0f) {
                             _requiredDetailResource = false
 
                             (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
@@ -196,7 +197,6 @@ class ViewerFragment : Fragment() {
                                         var bitmap: Bitmap? = null
                                         val option = BitmapFactory.Options()
                                         viewHolder.job?.cancel()
-                                        Log.d("PA", "redrawNormalResource: " + position.toString())
 
                                         viewHolder.job = launch {
                                             async {
@@ -205,7 +205,6 @@ class ViewerFragment : Fragment() {
                                             }.await()
 
                                             launch(UI) {
-                                                Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
                                                 viewHolder.bitmap = bitmap
                                             }
                                         }
@@ -214,7 +213,7 @@ class ViewerFragment : Fragment() {
                             }
                         }
                     false ->
-                        if (_currentScaleFactror > 2) {
+                        if (_currentScaleFactror > 2.0f) {
                             _requiredDetailResource = true
 
                             (_recyclerView.layoutManager as? LinearLayoutManager)?.let {
@@ -233,7 +232,6 @@ class ViewerFragment : Fragment() {
                                         var bitmap: Bitmap? = null
                                         val option = BitmapFactory.Options()
                                         viewHolder.job?.cancel()
-                                        Log.d("PA", "redrawDetailResource: " + position.toString())
 
                                         viewHolder.job = launch {
                                             async {
@@ -242,7 +240,6 @@ class ViewerFragment : Fragment() {
                                             }.await()
 
                                             launch(UI) {
-                                                Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
                                                 viewHolder.bitmap = bitmap
                                             }
                                         }
@@ -267,7 +264,6 @@ class ViewerFragment : Fragment() {
                                             var bitmap: Bitmap? = null
                                             val option = BitmapFactory.Options()
                                             viewHolder.job?.cancel()
-                                            Log.d("PA", "redrawNormalResource: " + position.toString())
 
                                             viewHolder.job = launch {
                                                 async {
@@ -276,7 +272,6 @@ class ViewerFragment : Fragment() {
                                                 }.await()
 
                                                 launch(UI) {
-                                                    Log.d("PA", "rebinded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
                                                     viewHolder.bitmap = bitmap
                                                 }
                                             }
@@ -290,7 +285,6 @@ class ViewerFragment : Fragment() {
             }
 
         fun add(page: File) {
-            Log.d("PA", "inserted")
             _list.add(page)
 
             notifyItemInserted(_list.size - 1)
@@ -303,12 +297,9 @@ class ViewerFragment : Fragment() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val view = LayoutInflater.from(parent!!.context).inflate(R.layout.layout_viewer_item, parent, false)
-            val viewHolder = ViewerItemViewHolder(view)
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.layout_viewer_item, parent, false)
 
-            Log.d("PA", "created")
-
-            return viewHolder
+            return ViewerItemViewHolder(view)
         }
 
         override fun getItemCount(): Int {
@@ -329,7 +320,6 @@ class ViewerFragment : Fragment() {
                 val option = BitmapFactory.Options()
                 viewHolder.job?.cancel()
 
-                Log.d("PA " + position.toString() + "before", Date().time.toString())
                 viewHolder.job = launch {
                     async {
                         when (_requiredDetailResource) {
@@ -343,12 +333,9 @@ class ViewerFragment : Fragment() {
                             }
                         }
                     }.await()
-                    Log.d("PA " + position.toString() + "processing", Date().time.toString())
-                    launch(UI) {
-                        Log.d("PA", "binded " + bitmap!!.width.toString() + ", " + bitmap!!.height.toString())
-                        holder.bitmap = bitmap
 
-                        Log.d("PA " + position.toString() + "after", Date().time.toString())
+                    launch(UI) {
+                        holder.bitmap = bitmap
                     }
                 }
             }
