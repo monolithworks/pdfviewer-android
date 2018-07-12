@@ -53,8 +53,61 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
                 mActivePointerId = event.getPointerId(0)
             }
-            MotionEvent.ACTION_MOVE -> {
 
+            MotionEvent.ACTION_MOVE -> {
+                try {
+                    val pointerIndex = event.findPointerIndex(mActivePointerId)
+                    val x = event.getX(pointerIndex)
+                    val y = event.getY(pointerIndex)
+                    val dx = x - mLastTouchX
+                    val dy = y - mLastTouchY
+
+                    mPosX += dx
+
+                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
+                        mPosY += dy
+                    }
+                    if (mPosX > 0.0f)
+                        mPosX = 0.0f
+                    else if (mPosX < maxWidth)
+                        mPosX = maxWidth
+
+                    if (mPosY > 0.0f)
+                        mPosY = 0.0f
+                    else if (mPosY < (maxHeight))
+                        mPosY = maxHeight
+
+                    invalidate()
+
+                    mLastTouchX = x
+                    mLastTouchY = y
+                } catch (e: Exception) {
+                    val x = event.x
+                    val y = event.y
+                    val dx = x - mLastTouchX
+                    val dy = y - mLastTouchY
+
+                    mPosX += dx
+
+                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
+                        mPosY += dy
+                    }
+
+                    if (mPosX > 0.0f)
+                        mPosX = 0.0f
+                    else if (mPosX < maxWidth)
+                        mPosX = maxWidth
+
+                    if (mPosY > 0.0f)
+                        mPosY = 0.0f
+                    else if (mPosY < (maxHeight))
+                        mPosY = maxHeight
+
+                    invalidate()
+
+                    mLastTouchX = x
+                    mLastTouchY = y
+                }
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -128,7 +181,31 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
                     mLastTouchX = x
                     mLastTouchY = y
                 } catch (e: Exception) {
+                    val x = event.x
+                    val y = event.y
+                    val dx = x - mLastTouchX
+                    val dy = y - mLastTouchY
 
+                    mPosX += dx
+
+                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
+                        mPosY += dy
+                    }
+
+                    if (mPosX > 0.0f)
+                        mPosX = 0.0f
+                    else if (mPosX < maxWidth)
+                        mPosX = maxWidth
+
+                    if (mPosY > 0.0f)
+                        mPosY = 0.0f
+                    else if (mPosY < (maxHeight))
+                        mPosY = maxHeight
+
+                    invalidate()
+
+                    mLastTouchX = x
+                    mLastTouchY = y
                 }
             }
 
