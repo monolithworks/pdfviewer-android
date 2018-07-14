@@ -141,7 +141,11 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
         val dy = y - mLastTouchY
 
         mPosX += dx
-        mPosY += dy
+        if (!canScrollVertically(1) || !canScrollVertically(-1)) {
+            mPosY += dy
+        } else {
+            mPosY += (if (dy > 0) { Math.floor(dy.toDouble() / mScaleFactor.toDouble()) } else { Math.ceil(dy.toDouble() / mScaleFactor.toDouble()) }).toFloat()
+        }
 
         if (mPosX > 0.0f)
             mPosX = 0.0f

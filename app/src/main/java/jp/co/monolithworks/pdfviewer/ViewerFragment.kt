@@ -19,6 +19,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ImageView
+import jp.co.monolithworks.pdfviewer.common.CustomizableLinearLayoutManager
 import jp.co.monolithworks.pdfviewer.recyclerView.viewHolder.ViewerItemViewHolder
 import kotlinx.android.synthetic.main.fragment_viewer.*
 import kotlinx.coroutines.experimental.CommonPool
@@ -62,7 +63,7 @@ class ViewerFragment : Fragment() {
         context?.let {context ->
             recycler.adapter = PageAdapter(listOf())
             recycler.setItemViewCacheSize(3)
-            recycler.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            recycler.layoutManager = CustomizableLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
             async {
                 getPDF(context, FILENAME).let {
@@ -178,6 +179,10 @@ class ViewerFragment : Fragment() {
             get() = _currentScaleFactror
             set(value) {
                 _currentScaleFactror = value
+
+                (_recyclerView.layoutManager as? CustomizableLinearLayoutManager)?.let {
+                    it.scaleFactror = _currentScaleFactror
+                }
 
                 when (_requiredDetailResource) {
                     true ->
