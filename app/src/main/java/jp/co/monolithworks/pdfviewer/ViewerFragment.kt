@@ -42,8 +42,8 @@ class ViewerFragment : Fragment() {
 
     companion object {
         private val VALUES = listOf<Int>(1024, 1024 * 3)
-        //private val FILENAME = "ura01a_torisetsu.pdf"
-        private val FILENAME = "853_811064_302_a.pdf"
+        private val FILENAME = "ura01a_torisetsu.pdf"
+        //private val FILENAME = "853_811064_302_a.pdf"
         //private val FILENAME = "TV_sou.pdf"
     }
 
@@ -165,6 +165,9 @@ class ViewerFragment : Fragment() {
     }
 
     inner class PageAdapter(items: List<File>): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        private val TYPE_REGULAR_WITH_MARGINETOP = 0
+        private val TYPE_REGULAR = 1
+
         private val _list = ArrayList(items)
         private var _requiredDetailResource = false
         private var _currentScaleFactror = 1.0f
@@ -297,13 +300,29 @@ class ViewerFragment : Fragment() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.layout_viewer_item, parent, false)
-
-            return ViewerItemViewHolder(view)
+            when (viewType) {
+                TYPE_REGULAR_WITH_MARGINETOP -> {
+                    val view = LayoutInflater.from(parent.context).inflate(R.layout.layout_viewer_item_with_margintop, parent, false)
+                    return ViewerItemViewHolder(view)
+                }
+                else -> {
+                    val view = LayoutInflater.from(parent.context).inflate(R.layout.layout_viewer_item, parent, false)
+                    return ViewerItemViewHolder(view)
+                }
+            }
         }
 
         override fun getItemCount(): Int {
             return _list.size
+        }
+
+        override fun getItemViewType(position: Int): Int {
+            return when(position) {
+                0 ->
+                    TYPE_REGULAR_WITH_MARGINETOP
+                else ->
+                    TYPE_REGULAR
+            }
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {

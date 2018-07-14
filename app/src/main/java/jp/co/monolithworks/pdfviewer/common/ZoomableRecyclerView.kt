@@ -45,73 +45,20 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
         when (action) {
             MotionEvent.ACTION_DOWN -> {
-                val pointerIndex = event.actionIndex
-                val x = event.getX(pointerIndex)
-                val y = event.getY(pointerIndex)
-
-                mLastTouchX = x
-                mLastTouchY = y
-
-                mActivePointerId = event.getPointerId(0)
+                event.actionIndex.let {
+                    mLastTouchX = event.getX(it)
+                    mLastTouchY = event.getY(it)
+                    mActivePointerId = event.getPointerId(0)
+                }
             }
 
             MotionEvent.ACTION_MOVE -> {
                 try {
-                    val pointerIndex = event.findPointerIndex(mActivePointerId)
-                    val x = event.getX(pointerIndex)
-                    val y = event.getY(pointerIndex)
-                    val dx = x - mLastTouchX
-                    val dy = y - mLastTouchY
-
-                    mPosX += dx
-
-                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
-                        mPosY += dy
-                    } else {
-                        mPosY -= dy
+                    event.findPointerIndex(mActivePointerId).let {
+                        translate(event.getX(it), event.getY(it))
                     }
-                    if (mPosX > 0.0f)
-                        mPosX = 0.0f
-                    else if (mPosX < maxWidth)
-                        mPosX = maxWidth
-
-                    if (mPosY > 0.0f)
-                        mPosY = 0.0f
-                    else if (mPosY < (maxHeight))
-                        mPosY = maxHeight
-
-                    invalidate()
-
-                    mLastTouchX = x
-                    mLastTouchY = y
                 } catch (e: Exception) {
-                    val x = event.x
-                    val y = event.y
-                    val dx = x - mLastTouchX
-                    val dy = y - mLastTouchY
-
-                    mPosX += dx
-
-                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
-                        mPosY += dy
-                    } else {
-                        mPosY -= dy
-                    }
-
-                    if (mPosX > 0.0f)
-                        mPosX = 0.0f
-                    else if (mPosX < maxWidth)
-                        mPosX = maxWidth
-
-                    if (mPosY > 0.0f)
-                        mPosY = 0.0f
-                    else if (mPosY < (maxHeight))
-                        mPosY = maxHeight
-
-                    invalidate()
-
-                    mLastTouchX = x
-                    mLastTouchY = y
+                    translate(event.x, event.y)
                 }
             }
 
@@ -121,12 +68,14 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
             MotionEvent.ACTION_POINTER_UP -> {
                 val pointerIndex = action and MotionEvent.ACTION_POINTER_INDEX_MASK shr MotionEvent.ACTION_POINTER_INDEX_SHIFT
-                val pointerId = event.getPointerId(pointerIndex)
-                if (pointerId == mActivePointerId) {
-                    val newPointerIndex = if (pointerIndex == 0) 1 else 0
-                    mLastTouchX = event.getX(newPointerIndex)
-                    mLastTouchY = event.getY(newPointerIndex)
-                    mActivePointerId = event.getPointerId(newPointerIndex)
+                event.getPointerId(pointerIndex).let {
+                    if (mActivePointerId == it) {
+                        val newPointerIndex = if (pointerIndex == 0) 1 else 0
+
+                        mLastTouchX = event.getX(newPointerIndex)
+                        mLastTouchY = event.getY(newPointerIndex)
+                        mActivePointerId = event.getPointerId(newPointerIndex)
+                    }
                 }
             }
         }
@@ -149,73 +98,20 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
         when (action) {
             MotionEvent.ACTION_DOWN -> {
-                val pointerIndex = event.actionIndex
-                val x = event.getX(pointerIndex)
-                val y = event.getY(pointerIndex)
-
-                mLastTouchX = x
-                mLastTouchY = y
-                mActivePointerId = event.getPointerId(0)
+                event.actionIndex.let {
+                    mLastTouchX = event.getX(it)
+                    mLastTouchY = event.getY(it)
+                    mActivePointerId = event.getPointerId(0)
+                }
             }
 
             MotionEvent.ACTION_MOVE -> {
                 try {
-                    val pointerIndex = event.findPointerIndex(mActivePointerId)
-                    val x = event.getX(pointerIndex)
-                    val y = event.getY(pointerIndex)
-                    val dx = x - mLastTouchX
-                    val dy = y - mLastTouchY
-
-                    mPosX += dx
-
-                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
-                        mPosY += dy
-                    } else {
-                        mPosY -= dy
+                    event.findPointerIndex(mActivePointerId).let {
+                        translate(event.getX(it), event.getY(it))
                     }
-
-                    if (mPosX > 0.0f)
-                        mPosX = 0.0f
-                    else if (mPosX < maxWidth)
-                        mPosX = maxWidth
-
-                    if (mPosY > 0.0f)
-                        mPosY = 0.0f
-                    else if (mPosY < (maxHeight))
-                        mPosY = maxHeight
-
-                    invalidate()
-
-                    mLastTouchX = x
-                    mLastTouchY = y
                 } catch (e: Exception) {
-                    val x = event.x
-                    val y = event.y
-                    val dx = x - mLastTouchX
-                    val dy = y - mLastTouchY
-
-                    mPosX += dx
-
-                    if (!canScrollVertically(-1) || !canScrollVertically(1)) {
-                        mPosY += dy
-                    } else {
-                        mPosY -= dy
-                    }
-
-                    if (mPosX > 0.0f)
-                        mPosX = 0.0f
-                    else if (mPosX < maxWidth)
-                        mPosX = maxWidth
-
-                    if (mPosY > 0.0f)
-                        mPosY = 0.0f
-                    else if (mPosY < (maxHeight))
-                        mPosY = maxHeight
-
-                    invalidate()
-
-                    mLastTouchX = x
-                    mLastTouchY = y
+                    translate(event.x, event.y)
                 }
             }
 
@@ -225,18 +121,42 @@ class ZoomableRecyclerView @JvmOverloads constructor(context: Context, attrs: At
 
             MotionEvent.ACTION_POINTER_UP -> {
                 val pointerIndex = action and MotionEvent.ACTION_POINTER_INDEX_MASK shr MotionEvent.ACTION_POINTER_INDEX_SHIFT
-                val pointerId = event.getPointerId(pointerIndex)
-                if (pointerId == mActivePointerId) {
-                    val newPointerIndex = if (pointerIndex == 0) 1 else 0
+                event.getPointerId(pointerIndex).let {
+                    if (mActivePointerId == it) {
+                        val newPointerIndex = if (pointerIndex == 0) 1 else 0
 
-                    mLastTouchX = event.getX(newPointerIndex)
-                    mLastTouchY = event.getY(newPointerIndex)
-                    mActivePointerId = event.getPointerId(newPointerIndex)
+                        mLastTouchX = event.getX(newPointerIndex)
+                        mLastTouchY = event.getY(newPointerIndex)
+                        mActivePointerId = event.getPointerId(newPointerIndex)
+                    }
                 }
             }
         }
 
         return true
+    }
+
+    fun translate(x: Float, y: Float) {
+        val dx = x - mLastTouchX
+        val dy = y - mLastTouchY
+
+        mPosX += dx
+        mPosY += dy
+
+        if (mPosX > 0.0f)
+            mPosX = 0.0f
+        else if (mPosX < maxWidth)
+            mPosX = maxWidth
+
+        if (mPosY > 0.0f)
+            mPosY = 0.0f
+        else if (mPosY < (maxHeight))
+            mPosY = maxHeight
+
+        invalidate()
+
+        mLastTouchX = x
+        mLastTouchY = y
     }
 
     override fun dispatchDraw(canvas: Canvas) {
